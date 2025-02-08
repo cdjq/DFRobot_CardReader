@@ -6,7 +6,7 @@
 
 ![正反面svg效果图](https://github.com/cdjq/DFRobot_CardReader/raw/master/resources/images/SEN0245svg4.png)
 
-## 产品链接（https://www.dfrobot.com.cn/)
+## 产品链接（ https://www.dfrobot.com.cn/ ）
 
 
 
@@ -29,152 +29,88 @@
 
 ## 方法
 ```c++
-    /**
-     * @fn getGs01Pid
-     * @brief 获取GS01设备的PID。
-     * @return GS01设备的PID。
-     */
-    uint16_t getGs01Pid();
+  /**
+   * @brief 卡片阅读器的构造函数。
+   * @param pWire I2C 接口的指针（默认：Wire）。
+   * @param addr 卡片阅读器的 I2C 地址（默认：0x28）。
+   */
+  DFRobot_CardReader(TwoWire *pWire = &Wire, uint8_t addr = I2C_ADDR);
     
-    /**
-     * @fn getGs01Vid
-     * @brief 获取GS01设备的VID。
-     * @return GS01设备的VID。
-     */
-    uint16_t getGs01Vid();
-    
-    /**
-     * @fn setDeviceAddr
-     * @brief 设置设备地址。
-     * @param addr 设备地址。
-     * @return 如果成功设置地址，则返回真；否则返回假。
-     */
-    bool setDeviceAddr(uint16_t addr);
-    
-    /**
-     * @fn configUart
-     * @brief 配置UART设置。
-     * 
-     * 此方法用于设置设备的UART通信参数，包括波特率、校验位和停止位。
-     * 用户可以根据需求选择适当的参数，以确保与设备的稳定有效通信。
-     *
-     * @param baud 波特率配置，类型为`eBaudConfig_t`，可能的值包括：
-     *              - `eBaud_1200`  - 1200波特
-     *              - `eBaud_2400`  - 2400波特
-     *              - `eBaud_4800`  - 4800波特
-     *              - `eBaud_9600`  - 9600波特
-     *              - `eBaud_14400` - 14400波特
-     *              - `eBaud_19200` - 19200波特
-     *              - `eBaud_38400` - 38400波特
-     *              - `eBaud_57600` - 57600波特
-     *              - `eBaud_115200`- 115200波特
-     *              - `eBaud_230400`- 230400波特
-     *              - `eBaud_460800`- 460800波特
-     *              - `eBaud_921600`- 921600波特
-     *
-     * @param parity 校验位配置，类型为`eParityConfig_t`，可能的值包括：
-     *              - `UART_CFG_PARITY_NONE`  - 无校验
-     *              - `UART_CFG_PARITY_ODD`   - 奇校验
-     *              - `UART_CFG_PARITY_EVEN`  - 偶校验
-     *              - `UART_CFG_PARITY_MARK`  - 标记校验
-     *              - `UART_CFG_PARITY_SPACE` - 空格校验
-     *
-     * @param stopBit 停止位配置，类型为`eStopbits_t`，可能的值包括：
-     *                - `UART_CFG_STOP_BITS_0_5` - 0.5停止位
-     *                - `UART_CFG_STOP_BITS_1`   - 1停止位
-     *                - `UART_CFG_STOP_BITS_1_5` - 1.5停止位
-     *                - `UART_CFG_STOP_BITS_2`   - 2停止位
-     *
-     * @return 配置状态，如果配置成功返回状态码；否则返回错误码。
-     */
-    uint16_t configUart(eBaudConfig_t baud, eParityConfig_t parity, eStopbits_t stopBit);
-    
-    /**
-     * @fn setFaceDetectThres
-     * @brief 设置人脸检测阈值。
-     * 
-     * 设置人脸检测的阈值（0-100）。默认值为60%。
-     *
-     * @param score 阈值。
-     * @return 如果成功，返回真；否则返回假。
-     */
-    bool setFaceDetectThres(uint16_t score);
-    
-    /**
-     * @fn setDetectThres
-     * @brief 设置X坐标的检测阈值。
-     * 
-     * 设置检测X坐标的阈值（0-100）。默认值为60%。
-     *
-     * @param x 阈值。
-     * @return 如果成功，返回真；否则返回假。
-     */
-    bool setDetectThres(uint16_t x);
-    
-    /**
-     * @fn setGestureDetectThres
-     * @brief 设置手势检测阈值。
-     * 
-     * 设置手势检测的阈值（0-100）。默认值为60%。
-     *
-     * @param score 阈值。
-     * @return 如果成功，返回真；否则返回假。
-     */
-    bool setGestureDetectThres(uint16_t score);
-    
-    /**
-     * @fn getFaceNumber
-     * @brief 获取设备检测到的人脸数量。
-     * @return 检测到的人脸数量。
-     */
-    uint16_t getFaceNumber();
-    
-    /**
-     * @fn getFaceLocationX
-     * @brief 获取检测到的人脸的X坐标。
-     * @return 人脸的X坐标。
-     */
-    uint16_t getFaceLocationX();
-    
-    /**
-     * @fn getFaceLocationY
-     * @brief 获取检测到的人脸的Y坐标。
-     * @return 人脸的Y坐标。
-     */
-    uint16_t getFaceLocationY();
-    
-    /**
-     * @fn getFaceScore
-     * @brief 获取检测到的人脸的得分。
-     * @return 人脸的得分。
-     */
-    uint16_t getFaceScore();
-    
-    /**
-     * @fn getGestureType
-     * @brief 获取检测到的手势类型。
-     * 
-     * 此方法检索当前检测到的手势类型。手势识别功能可以用于各种应用，如人机交互或控制系统。
-     * 返回的手势类型对应以下值：
-     * - 1: LIKE (👍) - 蓝色
-     * - 2: OK (👌) - 绿色
-     * - 3: STOP (🤚) - 红色
-     * - 4: YES (✌️) - 黄色
-     * - 5: SIX (🤙) - 紫色
-     * 
-     * 如果没有检测到手势，返回值可能是特定的无效值（例如，0）。
-     *
-     * @return 检测到的手势类型。
-     */
-    uint16_t getGestureType();
-    
-    /**
-     * @fn getGestureScore
-     * @brief 获取检测到的手势得分。
-     * @return 手势得分。
-     */
-    uint16_t getGestureScore();
+  /**
+   * @brief Initializes the card reader module.
+   * @param rstPin Pin number for resetting the module (default: 0).
+   * @return Returns 0 on success; otherwise, returns an error code.
+   */
+  char begin();
 
+  /**
+   * @brief Sets the authentication key for communication with the card.
+   * @param key Pointer to an array containing the 6-byte key.
+   */
+  void setKey(uint8_t *key);
+  
+  /*!
+   * @fn scan(String nfcuid)
+   * @brief Scan to determine whether there is a NFC smart card/tag with the specified UID.
+   * @param nfcuid UID of the NFC card.
+   * @return Boolean type, the result of operation
+   * @retval true Finds a card with a specific UID
+   * @retval false The card with a specific UID was not found
+   */
+  bool scan(String nfcuid);
+
+  /*!
+   * @fn scan(void)
+   * @brief Scan to determine whether there is a NFC smart card/tag.
+   * @return Boolean type, the result of operation
+   * @retval true means find out a MIFARE Classic card.
+   * @retval false no card
+   */
+  bool  scan(void);
+
+  /*!
+   * @fn readUid
+   * @brief Obtain the UID of the card .
+   * @return UID of the card.
+   */
+  String  readUid();
+
+   /*!
+    * @fn readData(int block, uint8_t offset)
+    * @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
+    * @param block The number of the block to read from.
+    * @param offset The offset of the block.
+    * @return A byte read from the card.
+    */
+  uint8_t readData(uint8_t block, uint8_t offset);
+
+  /*!
+   * @fn readData(uint8_t* buffer, uint8_t block)
+   * @brief Read a block from a MIFARE Classic NFC smart card/tag (16 bytes each block).
+   * @param buffer The buffer of the read data.
+   * @param block The number of the block to read from.
+   * @return Status code.
+   * @retval 1 successfully read data
+   * @retval -1 Failed to read data
+   */
+  String readData(uint8_t block);
+
+  /*!
+   * @fn writeData(int block, uint8_t num, uint8_t data)
+   * @brief Write a byte to a MIFARE Classic NFC smart card/tag.
+   * @param block The number of pages you want to writes the data.
+   * @param num The offset of the data.
+   * @param data The byte to be written.
+   */
+  char writeData(uint8_t block, uint8_t num, uint8_t data);
+
+  /*!
+   * @fn writeData(int block, uint8_t data[])
+   * @brief Write a block to a MIFARE Classic NFC smart card/tag..
+   * @param block The number of the block to write to.
+   * @param data The buffer of the data to be written.
+   */
+  char  writeData(uint8_t block, uint8_t data[]);
 
 ```
 
@@ -189,12 +125,10 @@ FireBeetle-ESP32        |      √       |              |             |
 
 ## 历史
 
-- Date 2024-11-25
+- Date 2025-02-08
 - Version V0.1
 
 
 ## 贡献者
 
-Written by fengli(li.feng@dfrobot.com), 2024.11.25 (Welcome to our [website](https://www.dfrobot.com/))
-
-## History
+Written by fary(feng.yang@dfrobot.com), 2025.02.08 (Welcome to our [website](https://www.dfrobot.com/))

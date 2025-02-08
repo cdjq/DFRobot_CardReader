@@ -1,5 +1,5 @@
 import time
-from machine import Pin, I2C
+import smbus
 
 
 
@@ -174,47 +174,23 @@ MI_INVALID_BASE           =  0x88
 MI_MFRC_RESET             =  0x87 
 MI_WRONG_VALUE            =  0x86 
 MI_VALERR                 =  0x85
-rst_pin = 14
 
 _STATUS_OK = 0x00
-uuid=[0]
-
-
-
 
 class Rfid(object):
     password_buffer=[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
     RC552_I2C_ADDR = 0x28
-    rst_pin = 14
     uuid=[0]
-    def __init__(self, i2c,serial_number=0):
+    def __init__(self,bus=4):
         """!
         @brief Module I2C communication init
         @param i2c_addr - I2C communication address
         @param bus_num - I2C bus
         """
         self._addr = self.RC552_I2C_ADDR
-        self._i2c = i2c
-        self._debug = False
-        self._buf = bytearray(3 + 255)
-        self.fw_version = self._buf[64]
-        self.nfc_uid = [0]
-        self.nfc_serial_number = serial_number
-        self.nfc_protocol = 0
+        self._i2c  = smbus.SMBus(bus)
         self.block_data = [0]*16
-        self.connect()
-        #print("init")
-        
-        #print(self.uuid)
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
     def read_raw_rc(self,address):
         """
         @brief 从指定地址读取1个字节数据````````````
@@ -222,14 +198,11 @@ class Rfid(object):
         @return 读取的数据
         """
         try:
-            self._i2c.writeto(self._addr, bytes([address]))  # 写入寄存器地址
-            read_data = self._i2c.readfrom(self._addr, 1)    # 读取1字节数据
-            #print(read_data[0])
-            return read_data[0] if read_data else 0          # 返回读取的数据
+            read_data = self._i2c.read_byte_data(self._addr, address) 
+            return read_data
         except Exception as e:
-            print(f"Error in read_raw_rc: {e}")
+            #print(f"Error in read_raw_rc: {e}")
             return 0
-    
         
     def write_raw_rc(self,address, value):
         """
@@ -238,12 +211,11 @@ class Rfid(object):
         @param value: 写入的数据
         """
         try:
-            self._i2c.writeto(self._addr, bytes([address, value]))  # 写入地址和数据
+            self._i2c.write_byte_data(self._addr, address, value) # 写入地址和数据
         except Exception as e:
-            print(f"Error in write_raw_rc: {e}")
-            
-            
-            
+            #print(f"Error in write_raw_rc: {e}")
+            pass
+    
     def set_bit_mask(self, reg, mask):
         """
         @brief 设置寄存器中的位
@@ -259,8 +231,7 @@ class Rfid(object):
             self.write_raw_rc(reg, tmp)
         except Exception as e:
             print(f"Error in set_bit_mask: {e}")
-    
-    
+
     def clear_bit_mask(self, reg, mask):
         """
         @brief 清除寄存器中的位
@@ -276,36 +247,23 @@ class Rfid(object):
             self.write_raw_rc(reg, tmp)
         except Exception as e:
             print(f"Error in clear_bit_mask: {e}")
-            
-    def PcdReset(self, rst_pin):
+
+    def PcdReset(self):
         """
         PcdReset 函数的 MicroPython 版本，用于初始化复位并配置模块。
-        :param rst_pin: 复位引脚的 GPIO 号
         :return: MI_OK (假设 MI_OK 是某个预定义的状态常量，通常为 0)
         """
-        # 初始化复位引脚为输出模式
-        #print(rst_pin)
-        rst = machine.Pin(rst_pin, machine.Pin.OUT)
-        # 执行复位操作
-        rst.value(1)
-        time.sleep_ms(10)
-        rst.value(0)
-        time.sleep_ms(10)
-        rst.value(1)
-        time.sleep_ms(10)
-    
         # 配置模块寄存器
         self.write_raw_rc(CommandReg, PCD_RESETPHASE)
-        time.sleep_ms(100)
+        time.sleep(0.1)
         self.write_raw_rc(ModeReg, 0x3D)
         self.write_raw_rc(TReloadRegL, 30)
         self.write_raw_rc(TReloadRegH, 0)
         self.write_raw_rc(TModeReg, 0x8D)
         self.write_raw_rc(TPrescalerReg, 0x3E)
         # WriteRawRC(TxASKReg, 0x40)  # DEBUG 和测试时可启用
-    
         return MI_OK            
-            
+    
     def pcd_com_mf522(self, command, p_in_data, in_len_byte, p_out_data, p_out_len_bit):
         """
         @brief 实现 PcdComMF522 的功能，用于与RC522通信。
@@ -434,8 +392,6 @@ class Rfid(object):
     
         return status, p_tag_type
 
-    
-    
     def pcd_anticoll(self):
         """
         @brief 实现 PcdAnticoll 功能，获取卡片的序列号。
@@ -475,7 +431,6 @@ class Rfid(object):
         self.set_bit_mask(CollReg, 0x80)
     
         return p_snr
-
     
     def pcd_select(self, p_snr):
         """
@@ -519,8 +474,8 @@ class Rfid(object):
             status = MI_OK
         else:
             status = MI_ERR
-    
         return status
+
     def pcd_auth_state(self, auth_mode, addr, p_key, p_snr):
         """
         @brief 实现 PcdAuthState 功能，用于对卡片的指定块进行认证。
@@ -555,8 +510,8 @@ class Rfid(object):
         # 检查认证状态
         if status != MI_OK or not (self.read_raw_rc(Status2Reg) & 0x08):
             status = MI_ERR
-    
         return status
+
     def pcd_read(self, addr):
         """
         @brief 实现 PcdRead 功能，从指定块地址读取数据。
@@ -593,8 +548,6 @@ class Rfid(object):
             return MI_OK, read_data
         else:
             return MI_ERR, None
-    
-
 
     def _read_block(self, block):
         """
@@ -603,14 +556,6 @@ class Rfid(object):
         @return: 读取状态和数据 (成功返回 (0, buf)，失败返回 (error_code, None))。
         """
         MI_OK = 0
-    
-        # 调用 PcdAuthState 进行认证\\
-        
-        #print("read-----------------")
-        #print(block)
-        #print(self.password_buffer)
-        #print(self.uuid)
-
         result = self.pcd_auth_state(0x60, block, self.password_buffer, self.uuid)
         if result != MI_OK:
             #print("error1")
@@ -621,13 +566,9 @@ class Rfid(object):
         if result != MI_OK:
             #print("error2")
             return "error"
-    
-
         # 如果不需要解密，直接返回读取的数据
         return data
-    
-    
-    
+
     def pcd_write(self,addr, pData):
         MI_OK = 0
         MI_ERR = -1
@@ -655,17 +596,14 @@ class Rfid(object):
         if status == MI_OK:
             for i in range(16):
                 ucComMF522Buf1[i] = pData[i]
-    
             # 计算数据的 CRC
             self.calculate_crc(ucComMF522Buf1, 16, crc)
             ucComMF522Buf1[16] = crc[0]
             ucComMF522Buf1[17] = crc[1]
             # 发送数据
             status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf1, 18, ucComMF522Buf1, unLen)
-    
             if status != MI_OK or unLen[0] != 4 or (ucComMF522Buf1[0] & 0x0F) != 0x0A:
                 status = MI_ERR
-    
         return status
     
     def _write_block(self, block, rf_buffer):
@@ -676,157 +614,39 @@ class Rfid(object):
         @return: 写入操作的状态 (0 表示成功, 非零表示失败)。
         """
         MI_OK = 0
-    
-
-    
         # 进行认证操作
         result = self.pcd_auth_state(0x60, block, self.password_buffer, self.uuid)
         if result != MI_OK:
-            #print("write error")
             return result
-        
-        # 写入数据到卡片
-        #print("rf_buffer")
-        #print(rf_buffer)
         result = self.pcd_write(block, rf_buffer)
         return result
 
-    
-    
-    '''
-    def pcd_value(self, dd_mode, addr, p_value):
-        """
-        @brief 通过指定的命令模式和地址与RFID标签进行交互，写入或读取数据。
-        @param dd_mode: 操作模式 (例如 读或写)
-        @param addr: 数据块地址
-        @param p_value: 要写入的数据
-        @return: 操作状态 (0 表示成功，非零表示失败)
-        """
-        status = MI_OK
-        unLen = [0]
-        ucComMF522Buf = [0] * MAXRLEN
-        
-        # 设置命令的第一部分
-        ucComMF522Buf[0] = dd_mode
-        ucComMF522Buf[1] = addr
-        # 计算 CRC
-        self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
-        # 发送命令
-        status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
-        if status != MI_OK or unLen[0] != 4 or (ucComMF522Buf[0] & 0x0F) != 0x0A:
-            status = MI_ERR
-    
-        # 如果命令成功，发送值
-        if status == MI_OK:
-            for i in range(MAX_LEN):
-                ucComMF522Buf[i] = pValue[i]
-            
-            # 计算 CRC
-            self.calculate_crc(ucComMF522Buf, 4, ucComMF522Buf[4:6])
-            unLen[0] = 0
-            # 发送数据
-            status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 6, ucComMF522Buf, unLen)
-    
-            if status != MI_ERR:
-                status = MI_OK
-    
-        # 最后进行转移操作
-        if status == MI_OK:
-            ucComMF522Buf[0] = PICC_TRANSFER
-            ucComMF522Buf[1] = addr
-            # 计算 CRC
-            self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
-            status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
-            if status != MI_OK or unLen[0] != 4 or (ucComMF522Buf[0] & 0x0F) != 0x0A:
-                status = MI_ERR
-    
-        return status
-     
-        
-    def PcdBakValue(self,sourceaddr, goaladdr):
-        status = MI_OK
-        unLen = [0]
-        ucComMF522Buf = [0] * MAXRLEN
-    
-        # 设置恢复命令
-        ucComMF522Buf[0] = PICC_RESTORE
-        ucComMF522Buf[1] = sourceaddr
-        # 计算 CRC
-        self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
-        # 发送恢复命令
-        status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
-        if status != MI_OK or unLen[0] != 4 or (ucComMF522Buf[0] & 0x0F) != 0x0A:
-            status = MI_ERR
-    
-        # 如果恢复命令成功，清空数据缓冲区
-        if status == MI_OK:
-            ucComMF522Buf[0] = 0
-            ucComMF522Buf[1] = 0
-            ucComMF522Buf[2] = 0
-            ucComMF522Buf[3] = 0
-            # 计算 CRC
-            self.calculate_crc(ucComMF522Buf, 4, ucComMF522Buf[4:6])
-    
-            unLen[0] = 0
-            # 发送清空命令
-            status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 6, ucComMF522Buf, unLen)
-    
-            if status != MI_ERR:
-                status = MI_OK
-    
-        # 如果恢复和清空操作成功，发送转移命令
-        if status == MI_OK:
-            ucComMF522Buf[0] = PICC_TRANSFER
-            ucComMF522Buf[1] = goaladdr
-            # 计算 CRC
-            self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
-            # 发送转移命令
-            status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
-            if status != MI_OK or unLen[0] != 4 or (ucComMF522Buf[0] & 0x0F) != 0x0A:
-                status = MI_ERR
-    
-        return status
-    '''       
     def PcdHalt(self):
         status = MI_OK
         unLen = [0]
         ucComMF522Buf = [0] * MAXRLEN
-    
         # 设置停止命令
         ucComMF522Buf[0] = PICC_HALT
         ucComMF522Buf[1] = 0
         # 计算 CRC
         self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
         # 发送停止命令
         status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
         return status
-        
+  
     def MIF_Halt(self):
         status = MI_OK
         unLen = [0]
         ucComMF522Buf = [0] * MAXRLEN
-    
         # 设置停止命令
         ucComMF522Buf[0] = PICC_HALT
         ucComMF522Buf[1] = 0
         # 计算 CRC
         self.calculate_crc(ucComMF522Buf, 2, ucComMF522Buf[2:4])
-    
         # 发送停止命令
         status = self.pcd_com_mf522(PCD_TRANSCEIVE, ucComMF522Buf, 4, ucComMF522Buf, unLen)
-    
         return status
-        
+
     def calculate_crc(self, pIndata, length, pOutData):
         i = 0
         n = 0
@@ -847,16 +667,14 @@ class Rfid(object):
         # 读取CRC结果
         pOutData[0] = self.read_raw_rc(CRCResultRegL)  # 低字节
         pOutData[1] = self.read_raw_rc(CRCResultRegM)  # 高字节  
-        
-
-
+ 
     def PcdAntennaOn(self):
            """
            打开天线的 MicroPython 实现。
            """
            # 设置 TxASKReg 寄存器
            self.write_raw_rc(TxASKReg, 0x40)
-           time.sleep_ms(10)  # 延迟 10ms
+           time.sleep(0.01)  # 延迟 10ms
        
            # 读取 TxControlReg 寄存器
            i = self.read_raw_rc(TxControlReg)
@@ -867,40 +685,15 @@ class Rfid(object):
            
            # 读取 TxASKReg 用于调试或后续使用（可选）
            i = self.read_raw_rc(TxASKReg)     
-        
-        
-        
-        
-    def connect(self):
+
+    def begin(self):
         """!
-        @brief Function connect.
+        @brief Function begin.
         @return Boolean type, the result of operation
         """
-        self.PcdReset(self.rst_pin)
+        self.PcdReset()
         self.PcdAntennaOn()   
-        if self.read_protocol() != "Unknown":
-        
-          data = self.pcd_anticoll()
-          self.scan_serial_num = int.from_bytes(bytes(data),'big')
-          #print("uuid:")
-          self.uuid = data
-          #print(data)
-          #print(self.uuid)
-          #print(self.scan_serial_num)
-          #选择卡片连接
-          #data
-        
-          status = self.pcd_select(data)
-          if status == 0:
-             return True
-          else:
-             return False 
-        else:
-        
-          return False
-
-
-        
+    
     def read_block(self, block, index=None):
         """!
         @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
@@ -920,14 +713,13 @@ class Rfid(object):
             return None
         self.block_data = data
         if index is None:
-            
             return data
         else:
-            
-            return self.block_data[index - 1]
+            if index>0:
+                return self.block_data[index - 1]
+            return None
 
- 
-    def write_block(self, block,data,index=0,):
+    def write_block(self, block,data,index=0):
         """!
         @brief Write a byte to a MIFARE Classic NFC smart card/tag.
         @param block - The number of pages you want to writes the data.
@@ -953,31 +745,19 @@ class Rfid(object):
                 return False
             real_val = data
         index = max(min(index, 16), 1)
-        self.read_block(block)
         if isinstance(data, int):
             #print(self.block_data)
+            self.read_block(block)
             self.block_data[index - 1] = data
             self._write_block(block, self.block_data)
-            
         else:
             block_data = [0 for i in range(index - 1)]
             block_data[index:] = real_val
             self._write_block(block, block_data)
         return True        
-        
-    def read_uid(self):
-        """!
-        @brief Obtain the UID of the card .
-        @return UID of the card.
-        """
-        return self.uuid
-        
+  
     def read_protocol(self):
-    
-    
         state,self.nfc_protocol = self.pcd_request(0x52)
-
-        
         if state != MI_OK: 
             return "no card!"
         if self.nfc_protocol[0] == 0x04 and self.nfc_protocol[1] == 0x00:
@@ -993,103 +773,46 @@ class Rfid(object):
         else:
             return "Unknown"
 
-class Rfid_Edu(Rfid):
-    def __init__(self, i2c, serial_number):
-        self._serial_number = serial_number
-        super().__init__(i2c,serial_number)
-        
-
-    def _get_serNum(self, serial_number):
-        serNumCheck = 0
-        buf = serial_number.to_bytes(4, 'little')
-        for i in range(4):
-            serNumCheck ^= buf[i]
-        serNum_list = [int(i) for i in buf]
-        serNum_list.append(serNumCheck)
-        #self.uuid = serNum_list
-        return (tuple(serNum_list))
-
-    def serial_number(self):
+    def scan(self,uuid=""):
+        """!
+        @brief Scan to determine whether there is a NFC smart card/tag.
+        @return Boolean type, the result of operation
+        @retval True means find out a MIFARE Classic card.
+        @retval False no card
         """
-        获取序列号
+        state,self.nfc_protocol = self.pcd_request(0x52)
+        ret = True
+        if state != MI_OK: 
+            self.card_type= "no card!"
+            ret = False
+        if self.nfc_protocol[0] == 0x04 and self.nfc_protocol[1] == 0x00:
+            self.card_type = "mifare"
+        elif self.nfc_protocol[0] == 0x02 and self.nfc_protocol[1] == 0x00:
+            self.card_type = "mifare"
+        elif self.nfc_protocol[0] == 0x44 and self.nfc_protocol[1] == 0x00:
+            self.card_type = "MF-UltraLight"
+        elif self.nfc_protocol[0] == 0x08 and self.nfc_protocol[1] == 0x00:
+            self.card_type = "mifare"
+        elif self.nfc_protocol[0] == 0x44 and self.nfc_protocol[1] == 0x03:
+            self.card_type = "MF Desire"
+        else:
+            self.card_type = "Unknown"
+            ret = False
+        if ret:
+            self.uuid = self.pcd_anticoll()
+            self.scan_serial_num = int.from_bytes(bytes(self.uuid),'big')
+            if self.pcd_select(self.uuid)!=0:
+              ret = False  
+        if uuid!="":
+            uid="".join([str(hex(u))[2:] for u in self.uuid])
+            uuid = uuid.lower()
+            if uuid!=uid:
+                ret = False
+        return ret
+
+    def read_uid(self):
+        """!
+        @brief Obtain the UID of the card.
+        @return UID of the card.
         """
-        return str(self._serial_number)
-
-class Scan_Rfid_Edu():
-    """扫描Rfid卡类.
-    """
-    @classmethod
-    def scanning(cls, i2c):
-        """
-        扫描RFID卡,返回Rfid对象
-
-        :param obj i2c: I2C实例对象
-        :return: 返回Rfid对象
-        """
-        #print("Scan_Rfid_Edu")
-        rfid_instance = Rfid(i2c)
-        if not rfid_instance.connect():
-            
-            return None
-        #print(rfid_instance.read_block(5,None))
-        if rfid_instance.read_uid():
-            serial_tuple = rfid_instance.scan_serial_num
-            
-            if serial_tuple:
-                #print(uuid)
-                Rfid_Edu(i2c, serial_tuple)
-                #print(uuid)
-                return Rfid_Edu(i2c, serial_tuple)
-        return None
-
-class rfid(Scan_Rfid_Edu):
-    def __init__(self,sda=21,scl=22):
-            self.i2c_1 = I2C(0,scl=Pin(scl),sda=Pin(sda),freq=400000)
-            #print("i2c_init")
-            time.sleep_ms(100)
-
-    def scanning(self,wait=True):
-        rf = None
-        if(isinstance(wait, bool)):
-            if(wait):
-                while True:
-                    rf = super().scanning(i2c=self.i2c_1)
-                    if rf:
-                        return rf
-                    else:
-                        time.sleep_ms(200)
-            else:
-                rf = super().scanning(i2c=self.i2c_1)
-                if rf:
-                    return rf
-                else:
-                    return None
-        elif(isinstance(wait, int)):
-            time_start = time.time()
-            while True:
-                if (int(time.time()-time_start) > wait):
-                    return None
-                rf = super().scanning(i2c=self.i2c_1)
-                if rf:
-                    return rf
-                else:
-                    time.sleep_ms(200)
-
-# 使用示例
-def main():
-    # 初始化 RFID 实例
-    rfid_reader = rfid()
-
-    # 1. 一直等待扫描 RFID 卡
-    print("scaning...")
-    card = rfid_reader.scanning(wait=True)
-    if card:
-        print(f"success RFID ，uuid: {card.serial_number()}")
-    write_data = [1,3,1,2,3,4,5,6,7,8,9,11,12,13,14,13]
-    print(f"write data addr 5: {write_data}")
-    card.write_block(5,write_data)
-    time.sleep_ms(2000)
-    print(f"read data addr 5:{card.read_block(5,None)}")
-
-#if __name__ == "__main__":
-#    main()
+        return "".join([format(u, "02x") for u in self.uuid])
