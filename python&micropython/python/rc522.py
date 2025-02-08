@@ -689,17 +689,16 @@ class Rfid(object):
     def begin(self):
         """!
         @brief Function begin.
-        @return Boolean type, the result of operation
         """
         self.PcdReset()
         self.PcdAntennaOn()   
     
     def read_block(self, block, index=None):
         """!
-        @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
-        @param block - The number of the block to read from.
-        @param index - The offset of the block.
-        @return Read from the card.
+        @brief reads data from the specified block of the MIFARE classic NFC smart card/tag.
+        @param block - The number of the block to read
+        @param index - Data offset (1-16). When index is None, it indicates the size of a block to be read. When index is greater than 0, it indicates a byte to be read
+        @return Indicates the read data
         """
         #print("read_block")
         data = self._read_block(block)
@@ -721,11 +720,11 @@ class Rfid(object):
 
     def write_block(self, block,data,index=0):
         """!
-        @brief Write a byte to a MIFARE Classic NFC smart card/tag.
-        @param block - The number of pages you want to writes the data.
-        @param index - The offset of the data.
-        @param data - The byte to be written.
-        @return Boolean type, the result of operation
+        @brief writes data to MIFARE classic NFC smart card/tag.
+        @param block - The number of the block to be written
+        @param data - Data to be written, when index is 0, indicates the size of a block to be written, when index is greater than 0, indicates a byte to be written
+        @param index - Data offset (1-16)
+        @return Boolean type, operation result
         """
         if isinstance(data, str):
             real_val = []
@@ -775,10 +774,11 @@ class Rfid(object):
 
     def scan(self,uuid=""):
         """!
-        @brief Scan to determine whether there is a NFC smart card/tag.
-        @return Boolean type, the result of operation
-        @retval True means find out a MIFARE Classic card.
-        @retval False no card
+        @brief scans to determine if there is an NFC smart card/label.
+        @param uuid - When the uuid is set, this method is used to scan the card of the uuid. If the UUID is not set, it detects whether the nfc card exists
+        @return Boolean type, operation result
+        @retval True: Find the card
+        @retval False: No card
         """
         state,self.nfc_protocol = self.pcd_request(0x52)
         ret = True

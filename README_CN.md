@@ -37,78 +37,69 @@
   DFRobot_CardReader(TwoWire *pWire = &Wire, uint8_t addr = I2C_ADDR);
     
   /**
-   * @brief Initializes the card reader module.
-   * @param rstPin Pin number for resetting the module (default: 0).
-   * @return Returns 0 on success; otherwise, returns an error code.
+   * @brief 初始化读卡器模块。
+   * @return 成功时返回0；否则，返回错误代码。
    */
   char begin();
-
-  /**
-   * @brief Sets the authentication key for communication with the card.
-   * @param key Pointer to an array containing the 6-byte key.
-   */
-  void setKey(uint8_t *key);
   
   /*!
    * @fn scan(String nfcuid)
-   * @brief Scan to determine whether there is a NFC smart card/tag with the specified UID.
-   * @param nfcuid UID of the NFC card.
-   * @return Boolean type, the result of operation
-   * @retval true Finds a card with a specific UID
-   * @retval false The card with a specific UID was not found
+   * @brief 扫描确认是否有与指定UID匹配的NFC智能卡/标签。
+   * @param nfcuid NFC卡的UID。
+   * @return 操作的结果
+   * @retval true：查找具有特定UID的卡
+   * @retval false ：无卡
    */
   bool scan(String nfcuid);
 
   /*!
    * @fn scan(void)
-   * @brief Scan to determine whether there is a NFC smart card/tag.
-   * @return Boolean type, the result of operation
-   * @retval true means find out a MIFARE Classic card.
-   * @retval false no card
+   * @brief 扫描确定是否有NFC智能卡/标签。
+   * @return 操作的结果
+   * @retval true：找到一张MIFARE经典卡。
+   * @retval false ：无卡
    */
   bool  scan(void);
 
   /*!
    * @fn readUid
-   * @brief Obtain the UID of the card .
-   * @return UID of the card.
+   * @brief 获取卡的UID。
+   * @return 卡的UID。
    */
   String  readUid();
 
    /*!
     * @fn readData(int block, uint8_t offset)
-    * @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
-    * @param block The number of the block to read from.
-    * @param offset The offset of the block.
-    * @return A byte read from the card.
+    * @brief 从MIFARE经典NFC智能卡/标签的指定块中读取一个字节。
+    * @param block 要读取的块的编号。
+    * @param offset 块的偏移量。
+    * @return 从卡上读出的一个字节。
     */
   uint8_t readData(uint8_t block, uint8_t offset);
 
   /*!
    * @fn readData(uint8_t* buffer, uint8_t block)
-   * @brief Read a block from a MIFARE Classic NFC smart card/tag (16 bytes each block).
-   * @param buffer The buffer of the read data.
-   * @param block The number of the block to read from.
-   * @return Status code.
-   * @retval 1 successfully read data
-   * @retval -1 Failed to read data
+   * @brief 从MIFARE经典NFC智能卡/标签读取一个块（每个块16字节）。
+   * @param buffer 读取数据的缓冲区。
+   * @param block 要读取的块的编号。
+   * @return 读取到的数据，字符串类型
    */
   String readData(uint8_t block);
 
   /*!
    * @fn writeData(int block, uint8_t num, uint8_t data)
-   * @brief Write a byte to a MIFARE Classic NFC smart card/tag.
-   * @param block The number of pages you want to writes the data.
-   * @param num The offset of the data.
-   * @param data The byte to be written.
+   * @brief 写一个字节到MIFARE经典NFC智能卡/标签。
+   * @param block 要写入的块的编号。
+   * @param num 数据偏移量。
+   * @param data 要写入的字节。
    */
   char writeData(uint8_t block, uint8_t num, uint8_t data);
 
   /*!
-   * @fn writeData(int block, uint8_t data[])
-   * @brief Write a block to a MIFARE Classic NFC smart card/tag..
-   * @param block The number of the block to write to.
-   * @param data The buffer of the data to be written.
+   * @fn writeData(uint8_t block, uint8_t data[])
+   * @brief  写一个块到MIFARE经典NFC智能卡/标签。
+   * @param block 要写入的块的编号。
+   * @param data 要写入数据的缓冲区。
    */
   char  writeData(uint8_t block, uint8_t data[]);
 
@@ -119,8 +110,8 @@
 
 MCU                | 表现良好	|表现异常	|未测试	|备注 |
 ------------------ | :----------: | :----------: | :---------: | -----
+Arduino UNO        |      √       |              |             | 
 
-FireBeetle-ESP32        |      √       |              |             | 
 
 
 ## 历史

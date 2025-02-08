@@ -25,48 +25,48 @@
     #行空板K10 MicoPython的init办法
     def __init__(self,scl=48,sda=47,bus=0)
       """!
-      @brief Module I2C communication init
-      @param i2c_addr - I2C communication address
-      @param bus_num - I2C bus
+      @brief 模块I2C通信初始化
+      @param scl - I2C scl 引脚
+      @param sda - I2C sda 引脚
+      @param bus - I2C 总线号
       """
     #行空板M10 Python的init办法
     def __init__(self,bus=4)
         """!
-        @brief Module I2C communication init
-        @param i2c_addr - I2C communication address
-        @param bus_num - I2C bus
+        @brief 模块I2C通信初始化
+        @param bus - I2C 总线号
         """
     def begin(self)
         """!
-        @brief Function begin.
-        @return Boolean type, the result of operation
+        @brief 模块初始化.
         """
     def scan(uuid="")
         """!
-        @brief Scan to determine whether there is a NFC smart card/tag.
-        @return Boolean type, the result of operation
-        @retval True means find out a MIFARE Classic card.
-        @retval False no card
+        @brief 扫描确定是否有NFC智能卡/标签。
+        @param uuid - 当uuid被设置值时，该方法用来扫描该uuid的卡，如没有设置则检测是否存在nfc 卡
+        @return Boolean 类型, 操作结果
+        @retval True：找到卡
+        @retval False：无卡
         """
     def read_uid()
         """!
-        @brief Obtain the UID of the card.
-        @return UID of the card.
+        @brief 获取卡的UID。
+        @return 卡的UID。
         """
     def write_block(self, block,data,index=0)
         """!
-        @brief Write a byte to a MIFARE Classic NFC smart card/tag.
-        @param block - The number of pages you want to writes the data.
-        @param index - The offset of the data.
-        @param data - The byte to be written.
-        @return Boolean type, the result of operation
+        @brief 写数据到MIFARE经典NFC智能卡/标签。
+        @param block - 要写入的块的编号
+        @param data - 要写入的数据，当index为0时，表示写一个块的大小，当index大于0时，表示写入一个字节
+        @param index - 数据偏移量（1-16）
+        @return Boolean 类型, 操作结果
         """
     def read_block(self, block, index=None)
         """!
-        @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
-        @param block - The number of the block to read from.
-        @param index - The offset of the block.
-        @return Read from the card.
+        @brief 从MIFARE经典NFC智能卡/标签的指定块中读取数据。
+        @param block - 要读取的块的编号
+        @param index - 数据偏移量（1-16）。当index为None时，表示读一个块的大小，当index大于0时，表示读一个字节
+        @return 读取到的数据
         """
 ```
 

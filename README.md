@@ -119,9 +119,10 @@ Provide an Arduino library to control
 
 ## Compatibility
 
-MCU                | Work Well    | Work Wrong   | Untested    | Remarks
+MCU                | 表现良好	|表现异常	|未测试	|备注 |
 ------------------ | :----------: | :----------: | :---------: | -----
-FireBeetle-ESP32        |      √       |              |             | 
+Arduino UNO        |      √       |              |             | 
+
 
 
 ## History

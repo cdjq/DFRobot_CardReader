@@ -20,31 +20,33 @@ This directory provides the methods for driving this module on the line board K1
 
 ## Methods
 ```Python
-    #行空板K10 MicoPython的init办法
+    #K10 MicoPython init method
     def __init__(self,scl=48,sda=47,bus=0)
-      """!
-      @brief Module I2C communication init
-      @param i2c_addr - I2C communication address
-      @param bus_num - I2C bus
-      """
-    #行空板M10 Python的init办法
+        """!
+        @brief Module I2C communication init
+        @param i2c_addr - I2C communication address
+        @param scl - I2C scl pin
+        @param sda - I2C sda pin
+        @param bus - I2C bus
+        """
+    #M10 Python init method
     def __init__(self,bus=4)
         """!
         @brief Module I2C communication init
         @param i2c_addr - I2C communication address
-        @param bus_num - I2C bus
+        @param bus - I2C bus
         """
     def begin(self)
         """!
         @brief Function begin.
-        @return Boolean type, the result of operation
         """
     def scan(uuid="")
         """!
-        @brief Scan to determine whether there is a NFC smart card/tag.
-        @return Boolean type, the result of operation
-        @retval true means find out a MIFARE Classic card.
-        @retval false no card
+        @brief scans to determine if there is an NFC smart card/label.
+        @param uuid - When the uuid is set, this method is used to scan the card of the uuid. If the UUID is not set, it detects whether the nfc card exists
+        @return Boolean type, operation result
+        @retval True: Find the card
+        @retval False: No card
         """
     def read_uid()
         """!
@@ -53,18 +55,18 @@ This directory provides the methods for driving this module on the line board K1
         """
     def write_block(self, block,data,index=0)
         """!
-        @brief Write a byte to a MIFARE Classic NFC smart card/tag.
-        @param block - The number of pages you want to writes the data.
-        @param index - The offset of the data.
-        @param data - The byte to be written.
-        @return Boolean type, the result of operation
+        @brief writes data to MIFARE classic NFC smart card/tag.
+        @param block - The number of the block to be written
+        @param data - Data to be written, when index is 0, indicates the size of a block to be written, when index is greater than 0, indicates a byte to be written
+        @param index - Data offset (1-16)
+        @return Boolean type, operation result
         """
     def read_block(self, block, index=None)
         """!
-        @brief Read a byte from a specified block of a MIFARE Classic NFC smart card/tag.
-        @param block - The number of the block to read from.
-        @param index - The offset of the block.
-        @return Read from the card.
+        @brief reads data from the specified block of the MIFARE classic NFC smart card/tag.
+        @param block - The number of the block to read
+        @param index - Data offset (1-16). When index is None, it indicates the size of a block to be read. When index is greater than 0, it indicates a byte to be read
+        @return Indicates the read data
         """
 ```
 
